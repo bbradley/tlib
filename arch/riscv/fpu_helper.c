@@ -368,7 +368,6 @@ uint64_t helper_fcvt_lu_s(CPUState *env, uint64_t frs1, uint64_t rm)
     mark_fs_dirty();
     return frs1;
 }
-
 uint64_t helper_fcvt_s_hw(CPUState *env, target_ulong rs1, uint64_t rm)
 {
     require_fp;

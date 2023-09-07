@@ -9,6 +9,8 @@ uint32_t tlib_get_maximum_block_size(void);
 void tlib_set_cycles_per_instruction(uint32_t size);
 uint32_t tlib_get_cycles_per_instruction(void);
 
+void tlib_raise_exception(uint32_t exception);
+
 void gen_helpers(void);
 
 char *tlib_get_arch();

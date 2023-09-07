@@ -55,6 +55,31 @@ enum {
     OPC_RISC_FP_ARITH    = (0x53),
 
     OPC_RISC_V           = (0x57),
+
+    OPC_CUSTOM_0         = (0x0B),
+    OPC_CUSTOM_1         = (0x2B),
+};
+
+#define MASK_OP_CUSTOM_0(op) (MASK_OP_MAJOR(op) | (op & (0x3 << 12)))
+
+enum {
+    OPC_RISC_LBGP   = OPC_CUSTOM_0 | (0x0 << 12),
+    OPC_RISC_ADDIGP = OPC_CUSTOM_0 | (0x1 << 12),
+    OPC_RISC_LBUGP  = OPC_CUSTOM_0 | (0x2 << 12),
+    OPC_RISC_SBGP   = OPC_CUSTOM_0 | (0x3 << 12),
+};
+
+#define MASK_OP_CUSTOM_1(op) (MASK_OP_MAJOR(op) | (op & (0x7 << 12)))
+
+enum {
+    OPC_RISC_SHGP  = OPC_CUSTOM_1 | (0x0 << 12),
+    OPC_RISC_LHGP  = OPC_CUSTOM_1 | (0x1 << 12),
+    OPC_RISC_LWGP  = OPC_CUSTOM_1 | (0x2 << 12),
+    OPC_RISC_LDGP  = OPC_CUSTOM_1 | (0x3 << 12), /* RV64 only */
+    OPC_RISC_SWGP  = OPC_CUSTOM_1 | (0x4 << 12),
+    OPC_RISC_LHUGP = OPC_CUSTOM_1 | (0x5 << 12),
+    OPC_RISC_LWUGP = OPC_CUSTOM_1 | (0x6 << 12), /* RV64 only */
+    OPC_RISC_SDGP  = OPC_CUSTOM_1 | (0x7 << 12), /* RV64 only */
 };
 
 #define MASK_OP_ARITH(op) (MASK_OP_MAJOR(op) | (op & ((0x7 << 12) |   \
@@ -534,6 +559,51 @@ enum {
 #define GET_RD(inst)             extract32(inst, 7, 5)
 #define GET_FUNCT12(inst)        extract32(inst, 20, 12)
 #define GET_IMM(inst)            sextract64(inst, 20, 12)
+#define GET_LBGP_IMM(inst)  ((extract32(inst, 14, 1)) \
+                            | (extract32(inst, 21, 10) << 1) \
+                            | (extract32(inst, 20, 1) << 11) \
+                            | (extract32(inst, 17, 3) << 12) \
+                            | (extract32(inst, 15, 2) << 15) \
+                            | (sextract64(inst, 31, 1) << 17))
+#define GET_LBUGP_IMM  GET_LBGP_IMM
+#define GET_ADDIGP_IMM(inst) ((extract32(inst, 14, 1)) \
+                            | (extract32(inst, 21, 10) << 1) \
+                            | (extract32(inst, 20, 1) << 11) \
+                            | (extract32(inst, 17, 3) << 12) \
+                            | (extract32(inst, 15, 2) << 15) \
+                            | (sextract64(inst, 31, 1) << 17))
+#define GET_SBGP_IMM(inst)  ((extract32(inst, 14, 1)) \
+                            | (extract32(inst, 8, 4) << 1) \
+                            | (extract32(inst, 25, 6) << 5) \
+                            | (extract32(inst, 7, 1) << 11) \
+                            | (extract32(inst, 17, 3) << 12) \
+                            | (extract32(inst, 15, 2) << 15) \
+                            | (sextract64(inst, 31, 1) << 17))
+#define GET_LHGP_IMM(inst) ((extract32(inst, 21, 10) << 1) \
+                            | (extract32(inst, 20, 1) << 11) \
+                            | (extract32(inst, 17, 3) << 12) \
+                            | (extract32(inst, 15, 2) << 15) \
+                            | (sextract64(inst, 31, 1) << 17))
+#define GET_LHUGP_IMM GET_LHGP_IMM
+#define GET_LWGP_IMM(inst) ((extract32(inst, 22, 9) << 2) \
+                            | (extract32(inst, 20, 1) << 11) \
+                            | (extract32(inst, 17, 3) << 12) \
+                            | (extract32(inst, 15, 2) << 15) \
+                            | (extract32(inst, 21, 1) << 17) \
+                            | (sextract64(inst, 31, 1) << 18))
+#define GET_SHGP_IMM(inst) ((extract32(inst, 8, 4) << 1) \
+                            | (extract32(inst, 25, 6) << 5) \
+                            | (extract32(inst, 7, 1) << 11) \
+                            | (extract32(inst, 17, 3) << 12) \
+                            | (extract32(inst, 15, 2) << 15) \
+                            | (sextract64(inst, 31, 1) << 17))
+#define GET_SWGP_IMM(inst) ((extract32(inst, 9, 3) << 2) \
+                            | (extract32(inst, 25, 6) << 5) \
+                            | (extract32(inst, 7, 1) << 11) \
+                            | (extract32(inst, 17, 3) << 12) \
+                            | (extract32(inst, 15, 2) << 15) \
+                            | (extract32(inst, 8, 1) << 17) \
+                            | (sextract64(inst, 31, 1) << 18))
 
 /* RVC decoding macros */
 #define GET_C_IMM(inst)          (extract32(inst, 2, 5)    \

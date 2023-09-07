@@ -813,6 +813,135 @@ static void gen_load(DisasContext *dc, uint32_t opc, int rd, int rs1, target_lon
     tcg_temp_free(t1);
 }
 
+static void gen_custom_0(DisasContext *dc, uint32_t opc)
+{
+    int rd, rs2, imm;
+
+    TCGv t0 = tcg_temp_new();
+    TCGv t1 = tcg_temp_new();
+
+    gen_sync_pc(dc);
+    gen_get_gpr(t0, 3); // x3 == GP
+
+    switch (opc) {
+    case OPC_RISC_LBGP:
+        rd = GET_RD(dc->opcode);
+        imm = GET_LBGP_IMM(dc->opcode);
+
+        tcg_gen_addi_tl(t0, t0, imm);
+
+        tcg_gen_qemu_ld8s(t1, t0, dc->base.mem_idx);
+
+        gen_set_gpr(rd, t1);
+        break;
+    case OPC_RISC_ADDIGP:
+        rd = GET_RD(dc->opcode);
+        imm = GET_ADDIGP_IMM(dc->opcode);
+
+        tcg_gen_addi_tl(t0, t0, imm);
+
+        gen_set_gpr(rd, t0);
+        break;
+    case OPC_RISC_LBUGP:
+        rd = GET_RD(dc->opcode);
+        imm = GET_LBUGP_IMM(dc->opcode);
+
+        tcg_gen_addi_tl(t0, t0, imm);
+
+        tcg_gen_qemu_ld8u(t1, t0, dc->base.mem_idx);
+
+        gen_set_gpr(rd, t1);
+        break;
+    case OPC_RISC_SBGP:
+        rs2 = GET_RS2(dc->opcode);
+        gen_get_gpr(t1, rs2);
+        imm = GET_SBGP_IMM(dc->opcode);
+
+        tcg_gen_addi_tl(t0, t0, imm);
+
+        tcg_gen_qemu_st8(t1, t0, dc->base.mem_idx);
+        break;
+    default:
+        kill_unknown(dc, RISCV_EXCP_ILLEGAL_INST);
+        break;
+    };
+
+    tcg_temp_free(t0);
+    tcg_temp_free(t1);
+}
+
+static void gen_custom_1(DisasContext *dc, uint32_t opc)
+{
+    int rd, rs2, imm;
+    (void)rs2;
+
+    TCGv t0 = tcg_temp_new();
+    TCGv t1 = tcg_temp_new();
+
+    gen_sync_pc(dc);
+    gen_get_gpr(t0, 3); // x3 == GP
+
+    switch (opc) {
+    case OPC_RISC_SHGP:
+        rs2 = GET_RS2(dc->opcode);
+        gen_get_gpr(t1, rs2);
+        imm = GET_SHGP_IMM(dc->opcode);
+
+        tcg_gen_addi_tl(t0, t0, imm);
+
+        tcg_gen_qemu_st16(t1, t0, dc->base.mem_idx);
+        break;
+    case OPC_RISC_LHGP:
+        rd = GET_RD(dc->opcode);
+        imm = GET_LHGP_IMM(dc->opcode);
+
+        tcg_gen_addi_tl(t0, t0, imm);
+
+        tcg_gen_qemu_ld16s(t1, t0, dc->base.mem_idx);
+
+        gen_set_gpr(rd, t1);
+        break;
+    case OPC_RISC_LWGP:
+        rd = GET_RD(dc->opcode);
+        imm = GET_LWGP_IMM(dc->opcode);
+
+        tcg_gen_addi_tl(t0, t0, imm);
+
+        tcg_gen_qemu_ld32s(t1, t0, dc->base.mem_idx);
+
+        gen_set_gpr(rd, t1);
+        break;
+    case OPC_RISC_SWGP:
+        rs2 = GET_RS2(dc->opcode);
+        gen_get_gpr(t1, rs2);
+        imm = GET_SWGP_IMM(dc->opcode);
+
+        tcg_gen_addi_tl(t0, t0, imm);
+
+        tcg_gen_qemu_st32(t1, t0, dc->base.mem_idx);
+        break;
+    case OPC_RISC_LHUGP:
+        rd = GET_RD(dc->opcode);
+        imm = GET_LHUGP_IMM(dc->opcode);
+
+        tcg_gen_addi_tl(t0, t0, imm);
+
+        tcg_gen_qemu_ld16u(t1, t0, dc->base.mem_idx);
+
+        gen_set_gpr(rd, t1);
+        break;
+    case OPC_RISC_LDGP:
+    case OPC_RISC_LWUGP:
+    case OPC_RISC_SDGP:
+    default:
+        kill_unknown(dc, RISCV_EXCP_ILLEGAL_INST);
+        break;
+    }
+
+    tcg_temp_free(t0);
+    tcg_temp_free(t1);
+}
+
 static void gen_store(DisasContext *dc, uint32_t opc, int rs1, int rs2, target_long imm)
 {
     gen_sync_pc(dc);
@@ -4682,6 +4811,12 @@ static void decode_RV32_64G(CPUState *env, DisasContext *dc)
         break;
     case OPC_RISC_V:
         gen_v(dc, MASK_OP_V(dc->opcode), rd, rs1, rs2, imm);
+        break;
+    case OPC_CUSTOM_0:
+        gen_custom_0(dc, MASK_OP_CUSTOM_0(dc->opcode));
+        break;
+    case OPC_CUSTOM_1:
+        gen_custom_1(dc, MASK_OP_CUSTOM_1(dc->opcode));
         break;
     default:
         kill_unknown(dc, RISCV_EXCP_ILLEGAL_INST);

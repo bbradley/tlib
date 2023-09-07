@@ -911,6 +911,24 @@ void helper_fence_i(CPUState *env)
 
 void do_unaligned_access(target_ulong addr, int access_type, int mmu_idx, void *retaddr)
 {
+    tlib_printf(LOG_LEVEL_NOISY, "Unaligned access @ 0x%u", addr);
+
+    // Andes N25 specific
+    target_ulong mmisc_ctl_csr = 0x7d0;
+    bool allow_unaligned_access = false;
+    if (has_custom_csr(env, mmisc_ctl_csr) != 0) {
+        target_ulong mmisc_ctl = tlib_read_csr(mmisc_ctl_csr);
+        // MSA/UNA bit 6 in mmisc_ctl
+        allow_unaligned_access = ((mmisc_ctl & (1 << 6)) == (1 << 6));
+    }
+
+    if (allow_unaligned_access) {
+        tlib_printf(LOG_LEVEL_NOISY, "Unaligned memory access ALLOWED");
+        return;
+    }
+
+    tlib_printf(LOG_LEVEL_NOISY, "Unaligned memory access NOT allowed");
+
     env->badaddr = addr;
     switch (access_type) {
     case ACCESS_DATA_LOAD:

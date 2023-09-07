@@ -189,6 +189,15 @@ uint32_t tlib_get_cycles_per_instruction()
 
 EXC_INT_0(uint32_t, tlib_get_cycles_per_instruction)
 
+void tlib_raise_exception(uint32_t exception)
+{
+#if defined(TARGET_RISCV32) || defined(TARGET_RISCV64)
+    helper_raise_exception(env, exception);
+#endif
+}
+
+EXC_VOID_1(tlib_raise_exception, uint32_t, exception)
+
 int32_t tlib_init(char *cpu_name)
 {
     init_tcg();
@@ -328,6 +337,8 @@ void tlib_restart_translation_block()
 {
     interrupt_current_translation_block(cpu, EXCP_WATCHPOINT);
 }
+
+EXC_VOID_0(tlib_restart_translation_block)
 
 void tlib_set_return_request()
 {
